@@ -1,5 +1,11 @@
 from main import cli
+from lib.decorators import execution_time
+
+
+@execution_time
+def run_jarvis(args):
+    args.func(args)
+
 
 if __name__ == '__main__':
-    args = cli()
-    args.func(args)
+    run_jarvis(cli())
