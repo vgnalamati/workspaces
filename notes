@@ -1,0 +1,14 @@
+# Dealing with Multiple Github accounts in a single computer
+
+enter "git config --global --edit"
+and include the following in the global config
+"
+[credential]
+  helper = osxkeychain
+  useHttpPath = true
+"
+
+and then update the individual config files to add username
+[user]
+    name = xxxx
+    email = xxxx@mail.com
