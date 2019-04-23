@@ -2,7 +2,7 @@ from main import cli
 from lib.decorators import execution_time
 
 
-@execution_time
+@execution_time(name='Jarvis')
 def run_jarvis(args):
     args.func(args)
 
