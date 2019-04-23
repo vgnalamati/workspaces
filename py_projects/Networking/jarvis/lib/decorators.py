@@ -1,5 +1,4 @@
 from time import time
-from functools import wraps
 
 
 class execution_time(object):
@@ -10,7 +9,7 @@ class execution_time(object):
     def __call__(self, func):
         def wrapper(*args, **kwargs):
             start_time = time()
-            func_return = func(*args, **kwargs)
+            func(*args, **kwargs)
             elapsed_time = time() - start_time
             if not self.func_name:
                 self.func_name = func.__name__
