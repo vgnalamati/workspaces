@@ -5,7 +5,7 @@ from prettytable import PrettyTable
 from multiprocessing import Pool
 
 slaac_ip_table = PrettyTable()
-slaac_ip_table.field_names = ['MAC Address', 'SLAAC IP', 'HOSTNAME', 'PING CHECK']
+slaac_ip_table.field_names = ['MAC', 'SLAAC IP', 'HOSTNAME', 'PING CHECK']
 
 ping_table = PrettyTable()
 ping_table.field_names = ['HOSTNAME', 'IP', 'PING STATUS']
@@ -29,7 +29,7 @@ def get_hostname(ip):
     try:
         output = socket.gethostbyaddr(ip)
         return output[0]
-    except socket.herror :
+    except socket.herror:
         return "No Hostname"
 
 
@@ -45,7 +45,7 @@ def generate_slaac_ip(args):
         slaac_ip = eui64_converter(prefix_pieces, mac_pieces)
         try:
             hostname = get_hostname(slaac_ip)
-        except:
+        except Exception:
             hostname = str()
         if args.ping:
             status = ping_test(slaac_ip)
@@ -59,7 +59,7 @@ def gather_prefix_pieces(prefix: str) -> list:
 
 
 def gather_mac_pieces(mac_list: list) -> list:
-    pieces_list = list()
+    pieces_list = []
     for mac in mac_list:
         mac = str(EUI(mac)).lower()
         pieces_list.append(mac.split('-'))
@@ -67,7 +67,7 @@ def gather_mac_pieces(mac_list: list) -> list:
 
 
 def eui64_converter(prefix_pieces: list, mac_pieces: list) -> str:
-    suffix = list()
+    suffix = []
     for index, piece in enumerate(mac_pieces):
         if index == 0:
             piece = hex(int(piece, 16) ^ 2)[2:]
@@ -96,9 +96,8 @@ def generate_ping_table(args):
         ips = [str(ip) for ip in list(net_subnet)]
     if ips:
         pools = Pool(processes=MAX_PROCESSES)
-        results = {ip:pools.apply_async(ping_table_data, args=(ip,)) for ip in ips}
+        results = {ip: pools.apply_async(ping_table_data, args=(ip,)) for ip in ips}
         for ip, result in results.items():
             output = result.get()
             ping_table.add_row([output['hostname'], ip, output['status']])
         print(ping_table)
-
