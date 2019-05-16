@@ -96,7 +96,7 @@ def generate_ping_table(args):
         ips = [str(ip) for ip in list(net_subnet)]
     if ips:
         pools = Pool(processes=MAX_PROCESSES)
-        results = {ip: pools.apply_async(ping_table_data, args=(ip,)) for ip in ips}
+        results = {ip: pools.apply_async(ping_table_data, args=(ip.rstrip(),)) for ip in ips}
         for ip, result in results.items():
             output = result.get()
             ping_table.add_row([output['hostname'], ip, output['status']])
