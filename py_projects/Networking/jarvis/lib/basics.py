@@ -1,5 +1,6 @@
 import re
 import os
+import json
 import socket
 import subprocess
 from netaddr import IPNetwork
@@ -22,9 +23,13 @@ def shell_execute(full_command_string):
 def read_file(filename_with_path: str) -> object:
     filename = os.path.basename(filename_with_path)
     path = os.path.dirname(filename_with_path)
+    extension=filename.split('.')[1]
     if filename in os.listdir(path):
         with open(os.path.join(path, filename), "r+") as raw:
-            data = raw.read()
+            if extension == 'json':
+                data = json.load(raw)
+            else:
+                data = raw.read()
         return data
     else:
         print(f"{filename} not found in {path}")

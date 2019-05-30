@@ -2,6 +2,7 @@ import os
 import argparse
 from lib import expand as expand_configs
 from lib.ip_operations import generate_slaac_ip, generate_ping_table
+from lib.network_map import find_paths
 
 
 def cli():
@@ -82,9 +83,44 @@ def cli():
         help='Subnet With mask'
     )
 
+    network_paths = subparsers.add_parser(
+        "get_paths",
+        help="Get Network Paths"
+    )
+
+    network_paths.add_argument(
+        '--src',
+        dest='source',
+        required=True,
+        help='Source Device'
+    )
+
+    network_paths.add_argument(
+        '--dst',
+        dest='destination',
+        required=True,
+        help='Destination device'
+    )
+
+    network_paths.add_argument(
+        '--avoid-reverse',
+        dest='bi_directional',
+        action='store_false',
+        help='Destination device'
+    )
+
+    network_paths.add_argument(
+        '--format',
+        dest='format',
+        choices={"table", "tree"},
+        default='table',
+        help='Destination device'
+    )
+
     configs_expand_parse.set_defaults(func=expand_configs)
     eui64_parser.set_defaults(func=generate_slaac_ip)
     ping_table.set_defaults(func=generate_ping_table)
+    network_paths.set_defaults(func=find_paths)
 
     return parser.parse_args()
 
