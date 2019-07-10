@@ -9,6 +9,7 @@ verify_ssl = true
 jinja2 = "*"
 netaddr = "*"
 prettytable = "*"
+treelib = "*"
 
 [requires]
 python_version = "3.7"
