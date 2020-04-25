@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import json
 import getpass
 import argparse
@@ -10,22 +9,37 @@ from napalm import get_network_driver
 def do_operation(operation_name):
     return {
         'arp': arp_table,
-        'base': base_info
+        'base': base_info,
+        'environ': environment_details,
+        'neigh': lldp_neighbors,
+        'counters': iface_counters,
         }.get(operation_name)
 
 
-def arp_table(device_obj):
-    return device_obj.get_arp_table()
+def arp_table(obj):
+    return obj.get_arp_table()
 
 
-def base_info(device_obj):
-    return device_obj.get_facts()
+def base_info(obj):
+    return obj.get_facts()
+
+
+def environment_details(obj):
+    return obj.get_environment()
+
+
+def lldp_neighbors(obj):
+    return obj.get_lldp_neighbors()
+
+
+def iface_counters(obj):
+    return obj.get_interfaces_counters()
 
 
 def implement_operation(args):
     device_driver = get_network_driver(args.os_type)
     with device_driver(args.device_name, getpass.getuser(), getpass.getpass()) as device:
-        print(do_operation(args.operation)(device))
+        print(json.dumps(do_operation(args.operation)(device), indent=4))
 
 
 def cli():
@@ -45,7 +59,7 @@ def cli():
     parser.add_argument(
         '--get',
         dest='operation',
-        choices=['arp', 'bgp', 'base'],
+        choices=['arp', 'environ', 'base', 'neigh', 'counters'],
         help='Operation to do on Network Device',
         required=True
     )
