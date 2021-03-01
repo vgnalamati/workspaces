@@ -21,7 +21,7 @@ def arp_table(obj):
 
 
 def base_info(obj):
-    return obj.get_facts()
+    return obj.get_config()
 
 
 def environment_details(obj):
@@ -41,33 +41,68 @@ def implement_operation(args):
     with device_driver(args.device_name, getpass.getuser(), getpass.getpass()) as device:
         print(json.dumps(do_operation(args.operation)(device), indent=4))
 
+def push_config(args):
+    device_driver = get_network_driver(args.os_type)
+    with device_driver(args.device_name, getpass.getuser(), getpass.getpass()) as device:
+        device.load_replace_candidate(filename=args.config_file)
+        print(device.compare_config())
+        device.commit_config()
 
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    subparsers = parser.add_subparsers()
+    subparsers.required = True
+
+    default_parent_parser = argparse.ArgumentParser(add_help=False)
+
+    default_parent_parser.add_argument(
         '--device',
         dest='device_name',
         help='Name of the device'
     )
-    parser.add_argument(
+    default_parent_parser.add_argument(
         '--os',
         dest='os_type',
-        choices=['eos', 'junos'],
+        choices=['eos', 'junos', 'nxos'],
         help='OS Version of the Network Device(s)',
         required=True
     )
-    parser.add_argument(
-        '--get',
+
+    operations_parse = subparsers.add_parser(
+        'get',
+        parents=[default_parent_parser],
+        help='Pull data from devices'
+    )
+
+    operations_parse.add_argument(
+        '--type',
         dest='operation',
         choices=['arp', 'environ', 'base', 'neigh', 'counters'],
-        help='Operation to do on Network Device',
+        help='Operations to do on Network Device',
         required=True
     )
+
+    config_changes_parser = subparsers.add_parser(
+        'push',
+        parents=[default_parent_parser],
+        help='Push Config to devices'
+    )
+
+    config_changes_parser.add_argument(
+        '--file',
+        dest='config_file',
+        help='Filename with path to push to the device',
+        required=True
+    )
+    operations_parse.set_defaults(func=implement_operation)
+    config_changes_parser.set_defaults(func=push_config)
+
     return parser.parse_args()
 
 
 def main():
-    implement_operation(cli())
+    args = cli()
+    args.func(args)
 
 
 if __name__ == '__main__':
