@@ -1,16 +1,19 @@
+import logging
 import socket
-from netaddr import EUI, IPNetwork
+from multiprocessing import Pool, cpu_count
+
 from lib.basics import read_file, shell_execute
+from netaddr import EUI, IPNetwork
 from prettytable import PrettyTable
-from multiprocessing import Pool
 
 slaac_ip_table = PrettyTable()
-slaac_ip_table.field_names = ['MAC', 'SLAAC IP', 'HOSTNAME', 'PING CHECK']
+slaac_ip_table.field_names = ["MAC", "SLAAC IP", "HOSTNAME", "PING CHECK"]
 
 ping_table = PrettyTable()
-ping_table.field_names = ['HOSTNAME', 'IP', 'PING STATUS']
+ping_table.field_names = ["HOSTNAME", "IP", "PING STATUS"]
 
-MAX_PROCESSES = 50
+
+logger = logging.getLogger(__name__)
 
 
 def ping_test(ip):
@@ -35,7 +38,7 @@ def get_hostname(ip):
 
 def generate_slaac_ip(args):
     if not any([args.file, args.mac]):
-        print('Missing Arguments for MAC address')
+        print("Missing Arguments for MAC address")
         return
     macs = read_file(args.file).splitlines() if args.file else [args.mac]
     mac_pieces_set = gather_mac_pieces(macs)
@@ -49,12 +52,12 @@ def generate_slaac_ip(args):
             hostname = str()
         if args.ping:
             status = ping_test(slaac_ip)
-        slaac_ip_table.add_row([':'.join(mac_pieces), slaac_ip, hostname, status])
+        slaac_ip_table.add_row([":".join(mac_pieces), slaac_ip, hostname, status])
     print(slaac_ip_table)
 
 
 def gather_prefix_pieces(prefix: str) -> list:
-    pieces = prefix.split(':')
+    pieces = prefix.split(":")
     return pieces[:4] if len(pieces) > 4 else pieces
 
 
@@ -62,7 +65,7 @@ def gather_mac_pieces(mac_list: list) -> list:
     pieces_list = []
     for mac in mac_list:
         mac = str(EUI(mac)).lower()
-        pieces_list.append(mac.split('-'))
+        pieces_list.append(mac.split("-"))
     return pieces_list
 
 
@@ -77,13 +80,13 @@ def eui64_converter(prefix_pieces: list, mac_pieces: list) -> str:
             suffix.append(f"fe{piece}")
         elif index % 2 == 0:
             suffix.append("{}{}".format(piece, mac_pieces[index + 1]))
-    return ':'.join(prefix_pieces + suffix)
+    return ":".join(prefix_pieces + suffix)
 
 
 def ping_table_data(ip):
     result = {}
-    result['status'] = ping_test(ip)
-    result['hostname'] = get_hostname(ip)
+    result["status"] = ping_test(ip)
+    result["hostname"] = get_hostname(ip)
     return result
 
 
@@ -95,9 +98,11 @@ def generate_ping_table(args):
         net_subnet = IPNetwork(args.subnet)
         ips = [str(ip) for ip in list(net_subnet)]
     if ips:
-        pools = Pool(processes=MAX_PROCESSES)
-        results = {ip: pools.apply_async(ping_table_data, args=(ip.rstrip(),)) for ip in ips}
+        pools = Pool(processes=cpu_count())
+        results = {
+            ip: pools.apply_async(ping_table_data, args=(ip.rstrip(),)) for ip in ips
+        }
         for ip, result in results.items():
             output = result.get()
-            ping_table.add_row([output['hostname'], ip, output['status']])
+            ping_table.add_row([output["hostname"], ip, output["status"]])
         print(ping_table)

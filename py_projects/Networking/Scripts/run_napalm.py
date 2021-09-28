@@ -13,6 +13,7 @@ def do_operation(operation_name):
         'environ': environment_details,
         'neigh': lldp_neighbors,
         'counters': iface_counters,
+        'ip': ifaces_ip,
         }.get(operation_name)
 
 
@@ -29,11 +30,14 @@ def environment_details(obj):
 
 
 def lldp_neighbors(obj):
-    return obj.get_lldp_neighbors()
+    return obj.get_lldp_neighbors_detail()
 
 
 def iface_counters(obj):
     return obj.get_interfaces_counters()
+
+def ifaces_ip(obj):
+    return obj.get_interfaces_ip()
 
 
 def implement_operation(args):
@@ -46,7 +50,8 @@ def push_config(args):
     with device_driver(args.device_name, getpass.getuser(), getpass.getpass()) as device:
         device.load_replace_candidate(filename=args.config_file)
         print(device.compare_config())
-        device.commit_config()
+        if 'y' in input("Do you want to Continue (y/n)? ").lower():
+            device.commit_config()
 
 def cli():
     parser = argparse.ArgumentParser()
@@ -77,7 +82,7 @@ def cli():
     operations_parse.add_argument(
         '--type',
         dest='operation',
-        choices=['arp', 'environ', 'base', 'neigh', 'counters'],
+        choices=['arp', 'ip', 'environ', 'base', 'neigh', 'counters'],
         help='Operations to do on Network Device',
         required=True
     )

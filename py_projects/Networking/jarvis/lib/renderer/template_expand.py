@@ -1,9 +1,11 @@
-import os
 import json
+import os
+
 from jinja2 import Environment, FileSystemLoader
-from .defaults import NODES, DEFAULTS
-from .custom_jinja_filters import ip_to_addr
-#import .custom_jinja_filters
+from lib.renderer.custom_jinja_filters import ip_to_addr
+from lib.renderer.defaults import NODES, DEFAULTS
+
+# import .custom_jinja_filters
 
 CWD = os.getcwd()
 
@@ -25,8 +27,8 @@ def read_base_file(filename: str) -> dict:
 def validate_input_data(data: dict) -> bool:
     print("Validating File data...")
     try:
-        tmpl_verification = validate_template(data['template'])
-        var_verification = validate_variables(data['variables'])
+        tmpl_verification = validate_template(data["template"])
+        var_verification = validate_variables(data["variables"])
         if all([tmpl_verification, var_verification]):
             print("Success: Input file passed the checks")
             return True
@@ -50,13 +52,13 @@ def validate_variables(variables: list) -> bool:
 
 
 def write_to_file(filename: str, data: str) -> None:
-    with open(os.path.join(CWD, filename), 'w+') as f:
+    with open(os.path.join(CWD, filename), "w+") as f:
         f.write(data)
     print(f"Created file {filename} in {CWD}")
 
 
 def udpate_base_provided_with_defaults(data: dict, model: str) -> dict:
-    if model in ['acc', 'agg', 'cor']:
+    if model in ["acc", "agg", "cor"]:
         data.update(DEFAULTS)
     return data
 
@@ -75,13 +77,14 @@ def file_path_and_name(full_path_to_file: str) -> str:
 
 def expand(args):
     verified_data = read_base_file(args.var)
-    template_dir, template_name = file_path_and_name(verified_data['template'])
-    for variable_set in verified_data['variables']:
-        variable_set = udpate_base_provided_with_defaults(variable_set, NODES[template_name])
+    template_dir, template_name = file_path_and_name(verified_data["template"])
+    for variable_set in verified_data["variables"]:
+        variable_set = udpate_base_provided_with_defaults(
+            variable_set, NODES[template_name]
+        )
         jinja_env = Environment(loader=FileSystemLoader(template_dir))
-        jinja_env.filters['ip_to_addr'] = ip_to_addr
-        #jinja_env = load_custom_filters(jinja_env)
+        jinja_env.filters["ip_to_addr"] = ip_to_addr
+        # jinja_env = load_custom_filters(jinja_env)
         template = jinja_env.get_template(template_name)
         rendered_file = template.render(variable_set)
-        write_to_file(variable_set['hostname'], rendered_file)
-
+        write_to_file(variable_set["hostname"], rendered_file)

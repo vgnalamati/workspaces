@@ -1,5 +1,6 @@
 from netaddr import IPNetwork
 
+
 def caps(string):
     return string.upper()
 
